@@ -1,4 +1,4 @@
-# Potter Airlines -- Flight Class, Dataset & Database (Mahsa's part)
+# Potter Airlines -- Flight Class, Dataset & Database 
 
 This covers Task 1 (Flight class + flight dataset) and Task 3 (SQLite
 database), which will be combined with the rest of the team's sections
