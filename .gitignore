@@ -1,0 +1,16 @@
+# virtual environment - each teammate has their own, shouldn't be shared
+venv/
+
+# python cache files - auto-generated, not real source code
+__pycache__/
+*.pyc
+
+# generated at runtime - everyone can regenerate these by running main.py
+*.db
+*.log
+
+# PyCharm project settings - personal to each teammate's machine
+.idea/
+
+# OS junk files
+.DS_Store
