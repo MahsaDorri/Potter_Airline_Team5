@@ -16,6 +16,7 @@ into the final project README.
 | `flight.py` | The `Flight` class -- stores one flight's data and makes sure it's always valid |   tested (validation + `update_seats` both checked) |
 | `sample_data.py` | Builds the flight dataset, reads/writes `flights.csv` |   tested (40 flights, no duplicate IDs, no past dates) |
 | `flights.csv` | The actual flight data (40 flights), editable in Excel |   generated and verified |
+| `pricing.py` | Dynamic pricing engine that computes final fares from base fare, time urgency, occupancy, route popularity, seasonal effects, weekend travel, and cabin class, while enforcing fare minimum/maximum limits | tested (all 40 flights successfully priced and checked) |
 | `database.py` | SQLite: create the table, insert, select, update, delete |   all 4 CRUD operations tested |
 | `logging_config.py` | Turns on logging so everything gets written to `potter_airlines.log` |   confirmed DEBUG/INFO/WARNING/ERROR all appear |
 | `main.py` | Runs everything: builds the flights, loads them into the database, and shows insert/select/update/delete working |   runs end-to-end with no errors |
