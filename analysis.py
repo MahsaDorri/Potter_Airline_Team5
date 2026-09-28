@@ -110,6 +110,8 @@ def summarize_by_destination(df):
 
 if __name__ == "__main__":
     import database
+    from Pricing import calculate_price
+    from datetime import date
 
     conn = database.connect()
 
@@ -145,5 +147,22 @@ if __name__ == "__main__":
     print(destination_summary)
 
     print("\nRows:", len(df))
+
+    # Cross-check vectorized pricing against Pricing.py
+    flight = database.get_flight(conn, "PA2001")
+
+    original_price = calculate_price(
+        flight,
+        reference_date=date(2026, 9, 15)
+    )
+
+    vectorized_price = df.loc[
+        df["flight_id"] == "PA2001",
+        "final_price"
+    ].iloc[0]
+
+    print("\nPricing cross-check:")
+    print("Pricing.py:", original_price)
+    print("analysis.py:", vectorized_price)
 
     conn.close()
