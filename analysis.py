@@ -42,17 +42,18 @@ def add_pricing_factors(df):
         1.00
     )
 
+    # Seasonal factor
     df["seasonal_factor"] = np.select(
-    [
-        df["departure_date"].dt.month.isin([6, 7, 8]),
-        df["departure_date"].dt.month.isin([11, 12])
-    ],
-    [
-        1.20,
-        1.15
-    ],
-    default=1.00
-)
+        [
+            df["departure_date"].dt.month.isin([6, 7, 8]),
+            df["departure_date"].dt.month.isin([11, 12])
+        ],
+        [
+            1.20,
+            1.15
+        ],
+        default=1.00
+    )
 
     # Load factor
     df["load_factor"] = (
@@ -69,21 +70,42 @@ def add_pricing_factors(df):
         0.9 + 0.3 * df["route_popularity"]
     )
 
+    # Calculate dynamic price across all flights
     df["raw_price"] = (
-    df["base_fare"]
-    * df["time_factor"]
-    * df["capacity_factor"]
-    * df["demand_factor"]
-    * df["weekend_factor"]
-    * df["seasonal_factor"]
-)
+        df["base_fare"]
+        * df["time_factor"]
+        * df["capacity_factor"]
+        * df["demand_factor"]
+        * df["weekend_factor"]
+        * df["seasonal_factor"]
+    )
 
+    # Apply minimum and maximum fare bounds
     df["final_price"] = df["raw_price"].clip(
-    lower=45,
-    upper=1500
-).round(2)
+        lower=45,
+        upper=1500
+    ).round(2)
 
     return df
+
+
+def get_top_priced_flights(df, n=5):
+    return df.nlargest(n, "final_price")
+
+
+def summarize_by_destination(df):
+    summary = (
+        df.groupby("destination")
+        .agg(
+            number_of_flights=("flight_id", "count"),
+            average_price=("final_price", "mean"),
+            average_load_factor=("load_factor", "mean")
+        )
+        .round(2)
+        .sort_values("average_price", ascending=False)
+    )
+
+    return summary
 
 
 if __name__ == "__main__":
@@ -91,18 +113,23 @@ if __name__ == "__main__":
 
     conn = database.connect()
 
+    # Load flight data from SQLite
     df = load_flights_dataframe(conn)
+
+    # Apply vectorized pricing calculations
     df = add_pricing_factors(df)
 
+    # Show sample calculated prices
     print(
         df[
             ["flight_id", "base_fare", "raw_price", "final_price"]
         ].head()
     )
 
+    # Show highest-priced flights
     print("\nTop 5 highest-priced flights:")
 
-    top_flights = df.nlargest(5, "final_price")
+    top_flights = get_top_priced_flights(df)
 
     print(
         top_flights[
@@ -110,6 +137,13 @@ if __name__ == "__main__":
         ]
     )
 
-    print("Rows:", len(df))
+    # Show destination-level analysis
+    print("\nDestination summary:")
+
+    destination_summary = summarize_by_destination(df)
+
+    print(destination_summary)
+
+    print("\nRows:", len(df))
 
     conn.close()
