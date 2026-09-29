@@ -18,10 +18,19 @@ into the final project README.
 | `flights.csv` | The actual flight data (40 flights), editable in Excel |   generated and verified |
 | `pricing.py` | Dynamic pricing engine that computes final fares from base fare, time urgency, occupancy, route popularity, seasonal effects, weekend travel, and cabin class, while enforcing fare minimum/maximum limits | tested (all 40 flights successfully priced and checked) |
 | `database.py` | SQLite: create the table, insert, select, update, delete |   all 4 CRUD operations tested |
+| `analysis.py` | Uses Pandas and NumPy to calculate dynamic prices across multiple flights using vectorized operations, rank flights by price, and summarize pricing/load factors by destination | tested (vectorized prices matched `Pricing.py` for all 39 flights in the integrated workflow) |
 | `logging_config.py` | Turns on logging so everything gets written to `potter_airlines.log` |   confirmed DEBUG/INFO/WARNING/ERROR all appear |
 | `main.py` | Runs everything: builds the flights, loads them into the database, and shows insert/select/update/delete working |   runs end-to-end with no errors |
 
 ## How to run it
+
+Install the required packages:
+
+```bash
+pip install pandas numpy matplotlib
+```
+
+Then run the project:
 
 ```bash
 python main.py
@@ -39,6 +48,12 @@ This will:
    (39 remain, was 40)
 4. Write everything that happened to `potter_airlines.log`.
     confirmed all 4 log levels (DEBUG/INFO/WARNING/ERROR) show up
+5. Load the updated SQLite flight data into a Pandas DataFrame and apply
+   the dynamic pricing calculations across all flights using vectorized
+   Pandas and NumPy operations.
+6. Rank the five highest-priced flights and produce a destination-level
+   summary showing the number of flights, average price, and average
+   load factor.
 
 ## The Flight class
 
@@ -283,6 +298,21 @@ of every pricing factor to be checked individually.
 
 All 40 flights in the project dataset were successfully processed by the
 pricing functions.
+
+## Pandas and NumPy Analysis
+
+`analysis.py` uses vectorized Pandas and NumPy operations to apply the
+dynamic pricing logic across multiple flights.
+
+The analysis:
+- calculates dynamic prices and handles sold-out flights
+- ranks the highest-priced available flights
+- summarizes average price and load factor by destination
+- visualizes average dynamic price by destination using Matplotlib
+
+The vectorized prices were cross-checked against `Pricing.py` using the
+same reference date (`2026-09-15`) and matched for all 39 flights in the
+integrated workflow.
 
 ## The database
 
