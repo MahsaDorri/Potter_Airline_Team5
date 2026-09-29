@@ -149,7 +149,6 @@ if __name__ == "__main__":
     print("\nRows:", len(df))
 
     # Cross-check vectorized pricing against Pricing.py
-        # Cross-check all vectorized prices against Pricing.py
     flights = database.get_all_flights(conn)
 
     pricing_results = {
