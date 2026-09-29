@@ -94,6 +94,11 @@ def fare_bounds(cabin_class):
 
 # Calculates the final dynamic fare for a single Flight object.
 def calculate_price(flight: Flight, reference_date=None):
+
+        # A sold-out flight has no available fare
+    if flight.seats_remaining == 0:
+        return None
+    
     # Use today's date by default to calculate how close the flight is to departure.
     reference_date = reference_date or date.today()
 

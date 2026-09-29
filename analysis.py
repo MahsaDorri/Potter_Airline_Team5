@@ -86,11 +86,17 @@ def add_pricing_factors(df):
         upper=1500
     ).round(2)
 
+    # Sold-out flights are unavailable for purchase
+    df["is_sold_out"] = df["seats_remaining"] == 0
+
+    df.loc[df["is_sold_out"], "final_price"] = np.nan
+
     return df
 
 
 def get_top_priced_flights(df, n=5):
-    return df.nlargest(n, "final_price")
+    available_flights = df[~df["is_sold_out"]]
+    return available_flights.nlargest(n, "final_price")
 
 
 def summarize_by_destination(df):
