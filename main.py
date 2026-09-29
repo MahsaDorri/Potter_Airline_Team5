@@ -99,4 +99,20 @@ if __name__ == '__main__':
 
     print(destination_summary)
 
+        # ---- ERROR HANDLING DEMONSTRATION ----
+    try:
+        invalid_flight = Flight(
+            "TEST",
+            "London",
+            "Paris",
+            "2026-10-10",
+            100,
+            150,
+            120,
+            0.5
+        )
+    except ValueError as error:
+        print("\nValidation handled successfully:")
+        print(error)
+
     conn.close()
