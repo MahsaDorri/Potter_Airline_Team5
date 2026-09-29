@@ -301,39 +301,18 @@ pricing functions.
 
 ## Pandas and NumPy Analysis
 
-`analysis.py` extends the single-flight pricing logic to analyze multiple
-flights at once using Pandas and NumPy.
+`analysis.py` uses vectorized Pandas and NumPy operations to apply the
+dynamic pricing logic across multiple flights.
 
-The flight records are loaded directly from the SQLite database into a
-Pandas DataFrame. Pricing factors are then calculated using vectorized
-operations rather than looping through the flights individually.
+The analysis:
+- calculates dynamic prices and handles sold-out flights
+- ranks the highest-priced available flights
+- summarizes average price and load factor by destination
+- visualizes average dynamic price by destination using Matplotlib
 
-The analysis calculates:
-
-- days until departure
-- time factor
-- load factor and capacity factor
-- demand factor
-- weekend factor
-- seasonal factor
-- raw price and final bounded price
-
-The analysis also:
-
-- ranks the five highest-priced flights using `nlargest()`
-- groups flights by destination
-- calculates the number of flights per destination
-- calculates average final price by destination
-- calculates average load factor by destination
-
-To verify that the vectorized implementation is consistent with the
-existing pricing engine, the calculated prices were compared with
-`Pricing.py` using the same reference date (`2026-09-15`).
-
-All 39 flights remaining after the CRUD demonstration produced matching
-prices in both implementations.
-
-- visualizes the average dynamic price by destination using Matplotlib
+The vectorized prices were cross-checked against `Pricing.py` using the
+same reference date (`2026-09-15`) and matched for all 39 flights in the
+integrated workflow.
 
 ## The database
 

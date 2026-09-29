@@ -1,76 +1,57 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+
 
 def load_flights_dataframe(conn):
+    """Load all flight records from SQLite into a Pandas DataFrame."""
     query = "SELECT * FROM flights"
-    df = pd.read_sql_query(query, conn)
-    return df
+    return pd.read_sql_query(query, conn)
 
 
 def add_pricing_factors(df):
+    """Calculate dynamic pricing factors across all flights."""
     df = df.copy()
 
-    # Convert departure dates to Pandas datetime format
+    # Prepare departure dates and use a fixed date for reproducible analysis
     df["departure_date"] = pd.to_datetime(df["departure_date"])
-
-    # Fixed reference date for reproducible analysis
     reference_date = pd.Timestamp("2026-09-15")
 
-    # Calculate days until departure for all flights
     df["days_until_departure"] = (
         df["departure_date"] - reference_date
     ).dt.days
 
-    # Time factor
+    # Calculate time, weekend, and seasonal pricing factors
     df["time_factor"] = np.select(
         [
             df["days_until_departure"] <= 7,
-            df["days_until_departure"] <= 21
+            df["days_until_departure"] <= 21,
         ],
-        [
-            1.35,
-            1.10
-        ],
-        default=1.00
+        [1.35, 1.10],
+        default=1.00,
     )
 
-    # Weekend factor
     df["weekend_factor"] = np.where(
         df["departure_date"].dt.weekday >= 4,
         1.10,
-        1.00
+        1.00,
     )
 
-    # Seasonal factor
     df["seasonal_factor"] = np.select(
         [
             df["departure_date"].dt.month.isin([6, 7, 8]),
-            df["departure_date"].dt.month.isin([11, 12])
+            df["departure_date"].dt.month.isin([11, 12]),
         ],
-        [
-            1.20,
-            1.15
-        ],
-        default=1.00
+        [1.20, 1.15],
+        default=1.00,
     )
 
-    # Load factor
-    df["load_factor"] = (
-        1 - df["seats_remaining"] / df["capacity"]
-    )
+    # Calculate capacity and demand-related pricing factors
+    df["load_factor"] = 1 - df["seats_remaining"] / df["capacity"]
+    df["capacity_factor"] = 1 + 0.45 * df["load_factor"]
+    df["demand_factor"] = 0.9 + 0.3 * df["route_popularity"]
 
-    # Capacity factor
-    df["capacity_factor"] = (
-        1 + 0.45 * df["load_factor"]
-    )
-
-    # Demand factor
-    df["demand_factor"] = (
-        0.9 + 0.3 * df["route_popularity"]
-    )
-
-    # Calculate dynamic price across all flights
+    # Calculate and bound the final dynamic price
     df["raw_price"] = (
         df["base_fare"]
         * df["time_factor"]
@@ -80,46 +61,45 @@ def add_pricing_factors(df):
         * df["seasonal_factor"]
     )
 
-    # Apply minimum and maximum fare bounds
     df["final_price"] = df["raw_price"].clip(
         lower=45,
-        upper=1500
+        upper=1500,
     ).round(2)
 
-    # Sold-out flights are unavailable for purchase
+    # Mark sold-out flights as unavailable for purchase
     df["is_sold_out"] = df["seats_remaining"] == 0
-
     df.loc[df["is_sold_out"], "final_price"] = np.nan
 
     return df
 
 
 def get_top_priced_flights(df, n=5):
+    """Return the highest-priced flights that still have available seats."""
     available_flights = df[~df["is_sold_out"]]
     return available_flights.nlargest(n, "final_price")
 
 
 def summarize_by_destination(df):
-    summary = (
+    """Summarize pricing and load factors by destination."""
+    return (
         df.groupby("destination")
         .agg(
             number_of_flights=("flight_id", "count"),
             average_price=("final_price", "mean"),
-            average_load_factor=("load_factor", "mean")
+            average_load_factor=("load_factor", "mean"),
         )
         .round(2)
         .sort_values("average_price", ascending=False)
     )
 
-    return summary
-
 
 def plot_average_price_by_destination(summary):
+    """Visualize the average dynamic price by destination."""
     average_prices = summary["average_price"].sort_values()
 
     average_prices.plot(
         kind="barh",
-        figsize=(8, 5)
+        figsize=(8, 5),
     )
 
     plt.title("Average Dynamic Price by Destination")
@@ -130,28 +110,25 @@ def plot_average_price_by_destination(summary):
 
 
 if __name__ == "__main__":
+    from datetime import date
+
     import database
     from Pricing import calculate_price
-    from datetime import date
 
     conn = database.connect()
 
-    # Load flight data from SQLite
+    # Run vectorized pricing analysis
     df = load_flights_dataframe(conn)
-
-    # Apply vectorized pricing calculations
     df = add_pricing_factors(df)
 
-    # Show sample calculated prices
     print(
         df[
             ["flight_id", "base_fare", "raw_price", "final_price"]
         ].head()
     )
 
-    # Show highest-priced flights
+    # Rank the highest-priced available flights
     print("\nTop 5 highest-priced flights:")
-
     top_flights = get_top_priced_flights(df)
 
     print(
@@ -160,24 +137,22 @@ if __name__ == "__main__":
         ]
     )
 
-    # Show destination-level analysis
+    # Summarize and visualize pricing by destination
     print("\nDestination summary:")
-
     destination_summary = summarize_by_destination(df)
 
     print(destination_summary)
-
     plot_average_price_by_destination(destination_summary)
 
     print("\nRows:", len(df))
 
-    # Cross-check vectorized pricing against Pricing.py
+    # Cross-check vectorized prices against the single-flight pricing engine
     flights = database.get_all_flights(conn)
 
     pricing_results = {
         flight.flight_id: calculate_price(
             flight,
-            reference_date=date(2026, 9, 15)
+            reference_date=date(2026, 9, 15),
         )
         for flight in flights
     }
@@ -186,7 +161,7 @@ if __name__ == "__main__":
 
     df["price_matches"] = np.isclose(
         df["final_price"],
-        df["pricing_py_price"]
+        df["pricing_py_price"],
     )
 
     matches = df["price_matches"].sum()

@@ -79,12 +79,14 @@ if __name__ == '__main__':
 
     print("remaining after delete:", cursor.fetchone()[0])
 
-    # ---- PANDAS / NUMPY ANALYSIS ----
+        # ---- PANDAS / NUMPY ANALYSIS ----
+
+    # Load flight data and apply vectorized pricing calculations
     df = load_flights_dataframe(conn)
     df = add_pricing_factors(df)
 
+    # Rank the highest-priced available flights
     print("\nTop 5 highest-priced flights:")
-
     top_flights = get_top_priced_flights(df)
 
     print(
@@ -93,13 +95,13 @@ if __name__ == '__main__':
         ]
     )
 
+    # Summarize pricing and load factors by destination
     print("\nDestination summary:")
-
     destination_summary = summarize_by_destination(df)
-
     print(destination_summary)
 
-        # ---- ERROR HANDLING DEMONSTRATION ----
+
+    # ---- ERROR HANDLING DEMONSTRATION ----
     try:
         invalid_flight = Flight(
             "TEST",
