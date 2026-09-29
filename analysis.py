@@ -149,20 +149,27 @@ if __name__ == "__main__":
     print("\nRows:", len(df))
 
     # Cross-check vectorized pricing against Pricing.py
-    flight = database.get_flight(conn, "PA2001")
+        # Cross-check all vectorized prices against Pricing.py
+    flights = database.get_all_flights(conn)
 
-    original_price = calculate_price(
-        flight,
-        reference_date=date(2026, 9, 15)
+    pricing_results = {
+        flight.flight_id: calculate_price(
+            flight,
+            reference_date=date(2026, 9, 15)
+        )
+        for flight in flights
+    }
+
+    df["pricing_py_price"] = df["flight_id"].map(pricing_results)
+
+    df["price_matches"] = np.isclose(
+        df["final_price"],
+        df["pricing_py_price"]
     )
 
-    vectorized_price = df.loc[
-        df["flight_id"] == "PA2001",
-        "final_price"
-    ].iloc[0]
+    matches = df["price_matches"].sum()
 
-    print("\nPricing cross-check:")
-    print("Pricing.py:", original_price)
-    print("analysis.py:", vectorized_price)
+    print("\nPricing validation:")
+    print(f"{matches} of {len(df)} flights matched Pricing.py")
 
     conn.close()
