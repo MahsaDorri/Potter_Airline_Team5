@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-
+import matplotlib.pyplot as plt
 
 def load_flights_dataframe(conn):
     query = "SELECT * FROM flights"
@@ -114,6 +114,21 @@ def summarize_by_destination(df):
     return summary
 
 
+def plot_average_price_by_destination(summary):
+    average_prices = summary["average_price"].sort_values()
+
+    average_prices.plot(
+        kind="barh",
+        figsize=(8, 5)
+    )
+
+    plt.title("Average Dynamic Price by Destination")
+    plt.xlabel("Average Price ($)")
+    plt.ylabel("Destination")
+    plt.tight_layout()
+    plt.show()
+
+
 if __name__ == "__main__":
     import database
     from Pricing import calculate_price
@@ -151,6 +166,8 @@ if __name__ == "__main__":
     destination_summary = summarize_by_destination(df)
 
     print(destination_summary)
+
+    plot_average_price_by_destination(destination_summary)
 
     print("\nRows:", len(df))
 

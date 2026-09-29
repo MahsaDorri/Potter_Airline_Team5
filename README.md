@@ -27,7 +27,7 @@ into the final project README.
 Install the required packages:
 
 ```bash
-pip install pandas numpy
+pip install pandas numpy matplotlib
 ```
 
 Then run the project:
@@ -332,6 +332,8 @@ existing pricing engine, the calculated prices were compared with
 
 All 39 flights remaining after the CRUD demonstration produced matching
 prices in both implementations.
+
+- visualizes the average dynamic price by destination using Matplotlib
 
 ## The database
 
