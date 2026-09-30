@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 
 import database
+from flight import Flight
 from sample_data import build_sample_flights, QUOTE_DATE_STR
 from Pricing import (
     time_factor,
@@ -42,7 +43,7 @@ for flight in flights:
         reference_date=reference_date
     )
 
-    # Display sold-out flights clearly instead of formatting None as a number.
+    # Display sold-out flights clearly.
     if final_price is None:
         price_display = "Sold Out"
     else:
@@ -203,3 +204,197 @@ for flight in flights:
         )
 
     print("-" * 50)
+
+
+# ==================================================
+# Test 3: Edge Case Tests
+# Checks important validation and boundary cases.
+# ==================================================
+
+print("\n--- Edge Case Tests ---\n")
+
+
+# --------------------------------------------------
+# Edge Case 1: Capacity cannot be zero.
+# --------------------------------------------------
+
+try:
+    Flight(
+        "TEST001",
+        "Toronto",
+        "Paris",
+        "2026-10-10",
+        100,
+        50,
+        0,
+        0.7
+    )
+
+    print("FAIL: capacity = 0 was accepted")
+
+except ValueError:
+    print("PASS: capacity = 0 correctly raises ValueError")
+
+
+# --------------------------------------------------
+# Edge Case 2: Seats remaining cannot exceed capacity.
+# --------------------------------------------------
+
+try:
+    Flight(
+        "TEST002",
+        "Toronto",
+        "Paris",
+        "2026-10-10",
+        100,
+        150,
+        120,
+        0.7
+    )
+
+    print("FAIL: seats_remaining > capacity was accepted")
+
+except ValueError:
+    print(
+        "PASS: seats_remaining > capacity "
+        "correctly raises ValueError"
+    )
+
+
+# --------------------------------------------------
+# Edge Case 3: Base fare cannot be negative.
+# --------------------------------------------------
+
+try:
+    Flight(
+        "TEST003",
+        "Toronto",
+        "Paris",
+        "2026-10-10",
+        -100,
+        50,
+        120,
+        0.7
+    )
+
+    print("FAIL: negative base fare was accepted")
+
+except ValueError:
+    print(
+        "PASS: negative base fare "
+        "correctly raises ValueError"
+    )
+
+
+# --------------------------------------------------
+# Edge Case 4: Route popularity must be between 0 and 1.
+# --------------------------------------------------
+
+try:
+    Flight(
+        "TEST004",
+        "Toronto",
+        "Paris",
+        "2026-10-10",
+        100,
+        50,
+        120,
+        1.5
+    )
+
+    print("FAIL: invalid route popularity was accepted")
+
+except ValueError:
+    print(
+        "PASS: invalid route popularity "
+        "correctly raises ValueError"
+    )
+
+
+# --------------------------------------------------
+# Edge Case 5: Departure date cannot be in the past.
+# --------------------------------------------------
+
+past_flight = Flight(
+    "TEST005",
+    "Toronto",
+    "Paris",
+    "2026-09-10",
+    100,
+    50,
+    120,
+    0.7
+)
+
+try:
+    calculate_price(
+        past_flight,
+        reference_date=reference_date
+    )
+
+    print("FAIL: past departure date was accepted")
+
+except ValueError:
+    print(
+        "PASS: past departure date "
+        "correctly raises ValueError"
+    )
+
+
+# --------------------------------------------------
+# Edge Case 6: Sold-out flight should not return a fare.
+# --------------------------------------------------
+
+sold_out_flight = Flight(
+    "TEST006",
+    "Toronto",
+    "Paris",
+    "2026-10-10",
+    100,
+    0,
+    120,
+    0.7
+)
+
+sold_out_price = calculate_price(
+    sold_out_flight,
+    reference_date=reference_date
+)
+
+if sold_out_price is None:
+    print(
+        "PASS: sold-out flight correctly "
+        "returns no purchasable fare"
+    )
+else:
+    print(
+        "FAIL: sold-out flight returned "
+        f"${sold_out_price:.2f}"
+    )
+
+
+# --------------------------------------------------
+# Edge Case 7: Seat update cannot oversell a flight.
+# --------------------------------------------------
+
+seat_test_flight = Flight(
+    "TEST007",
+    "Toronto",
+    "Paris",
+    "2026-10-10",
+    100,
+    5,
+    120,
+    0.7
+)
+
+try:
+    seat_test_flight.update_seats(-10)
+
+    print("FAIL: overselling seats was accepted")
+
+except ValueError:
+    print(
+        "PASS: overselling seats "
+        "correctly raises ValueError"
+    )
