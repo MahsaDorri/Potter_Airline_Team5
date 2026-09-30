@@ -36,18 +36,16 @@ if __name__ == "__main__":
         120,
         0.91
     )
-
+    print('Before updating seats:', f)
     # Demonstrate updating seats through the Flight class.
     f.update_seats(-5)
-
-    print(f)
+    print('After updating seats:', f)
     print("Load factor:", round(f.load_factor(), 2))
-
 
     # ==================================================
     # 2. LOAD SAMPLE FLIGHT DATA
     # ==================================================
-
+    print("\n--- Load Sample Flight Data ---\n")
     flights = build_sample_flights()
 
     print(
@@ -59,7 +57,7 @@ if __name__ == "__main__":
     # ==================================================
     # 3. SQLITE DATABASE SETUP
     # ==================================================
-
+    print("\n--- SQLite Database Setup ---\n")
     conn = database.connect()
 
     # Reset the table so every run begins with
@@ -83,7 +81,7 @@ if __name__ == "__main__":
     # ==================================================
     # 4. DATABASE SELECT
     # ==================================================
-
+    print("\n--- Database Select ---\n")
     all_flights = database.get_all_flights(conn)
 
     print(
@@ -111,7 +109,8 @@ if __name__ == "__main__":
     # ==================================================
     # 5. DATABASE UPDATE
     # ==================================================
-
+    print("\n--- Database Update ---\n")
+    print('PA2001 seats before update:', database.get_flight(conn, "PA2001").seats_remaining)
     database.update_seats(
         conn,
         "PA2001",
@@ -132,7 +131,11 @@ if __name__ == "__main__":
     # ==================================================
     # 6. DATABASE DELETE
     # ==================================================
-
+    print("\n--- Database Delete ---\n")
+    print(
+        "PA2040 seats before delete:",
+        database.get_flight(conn, "PA2040").seats_remaining
+    )
     database.delete_flight(
         conn,
         "PA2040"

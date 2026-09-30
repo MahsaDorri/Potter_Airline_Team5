@@ -98,6 +98,6 @@ class Flight:
 
     def __repr__(self):
         # makes print(flight) show something readable instead of a memory address
-        return (f"Flight({self.flight_id}, {self.origin}->{self.destination}, "
+        return (f"Flight({self.flight_id}, {self.origin}->{self.destination}, {self.seats_remaining},"
                 f"{self.departure_date.isoformat()})")
 

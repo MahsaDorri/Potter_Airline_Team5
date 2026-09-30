@@ -97,10 +97,19 @@ def plot_average_price_by_destination(summary):
     """Visualize the average dynamic price by destination."""
     average_prices = summary["average_price"].sort_values()
 
-    average_prices.plot(
+    ax = average_prices.plot(
         kind="barh",
         figsize=(8, 5),
     )
+
+    for i, value in enumerate(average_prices):
+        ax.text(
+            value,
+            i,
+            f"${value:.2f}",
+            va="center"
+        )
+    ax.set_xlim(0, average_prices.max() * 1.15)
 
     plt.title("Average Dynamic Price by Destination")
     plt.xlabel("Average Price ($)")

@@ -1,7 +1,7 @@
 flight_id,origin,destination,departure_date,base_fare,seats_remaining,capacity,route_popularity
 PA2001,London,Hogsmeade,2026-09-22,135.0,18,120,0.91
 PA2002,London,Edinburgh,2026-10-19,92.0,70,120,0.72
-PA2003,Manchester,Diagon Alley,2026-09-17,96.0,8,90,0.69
+PA2003,Manchester,Diagon Alley,2026-09-17,96.0,0,90,0.69
 PA2004,Toronto,Hogsmeade,2026-09-20,110.0,60,100,0.8
 PA2005,London,Paris,2026-10-05,150.0,100,150,0.85
 PA2006,New York,Hogsmeade,2026-12-24,220.0,15,180,0.95
