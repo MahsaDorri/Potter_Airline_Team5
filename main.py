@@ -14,6 +14,7 @@ from analysis import (
     add_pricing_factors,
     get_top_priced_flights,
     summarize_by_destination,
+    plot_average_price_by_destination,
 )
 
 
@@ -89,7 +90,6 @@ if __name__ == "__main__":
         "\nTotal flights in database:",
         len(all_flights)
     )
-
 
     # Find flights travelling to Hogsmeade.
     hogsmeade_flights = database.get_flights_by_destination(
@@ -231,6 +231,17 @@ if __name__ == "__main__":
     )
 
     print(destination_summary)
+
+
+    # --------------------------------------------------
+    # Visualization
+    # --------------------------------------------------
+
+    print("\nDisplaying average dynamic price by destination graph...")
+
+    plot_average_price_by_destination(
+        destination_summary
+    )
 
 
     # ==================================================
