@@ -1,5 +1,7 @@
 # virtual environment - each teammate has their own, shouldn't be shared
 venv/
+.venv/
+.venv-1/
 
 # python cache files - auto-generated, not real source code
 __pycache__/
@@ -14,4 +16,3 @@ __pycache__/
 
 # OS junk files
 .DS_Store
-.venv/
