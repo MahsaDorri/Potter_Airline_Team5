@@ -9,7 +9,6 @@ from Pricing import (
     demand_factor,
     weekend_factor,
     seasonal_factor,
-    # cabin_factor,
     calculate_price,
 )
 
@@ -43,12 +42,17 @@ for flight in flights:
         reference_date=reference_date
     )
 
+    # Display sold-out flights clearly instead of formatting None as a number.
+    if final_price is None:
+        price_display = "Sold Out"
+    else:
+        price_display = f"${final_price:.2f}"
+
     print(
         f"{flight.flight_id}: "
         f"{flight.origin} -> {flight.destination} | "
-        # f"Cabin: {flight.cabin_class} | "
         f"Base fare: ${flight.base_fare:.2f} | "
-        f"Final price: ${final_price:.2f}"
+        f"Final price: {price_display}"
     )
 
 
@@ -66,7 +70,6 @@ for flight in flights:
     days_until_departure = flight.days_until_departure(
         reference_date
     )
-
 
     # Calculate each active pricing factor.
     time_factor_value = time_factor(
@@ -90,18 +93,7 @@ for flight in flights:
         flight.departure_date
     )
 
-
-    # TODO:
-    # Enable once cabin_class is added to the Flight class
-    # and the project data.
-    #
-    # cabin_factor_value = cabin_factor(
-    #     flight.cabin_class
-    # )
-
-
-    # Calculate the raw price before fare boundaries
-    # are applied.
+    # Calculate the raw price before fare boundaries are applied.
     raw_price = (
         flight.base_fare
         * time_factor_value
@@ -109,9 +101,7 @@ for flight in flights:
         * demand_factor_value
         * weekend_factor_value
         * seasonal_factor_value
-        # * cabin_factor_value
     )
-
 
     # Calculate the final bounded price using
     # the main pricing function.
@@ -120,12 +110,12 @@ for flight in flights:
         reference_date=reference_date
     )
 
-
     # ----------------------------------------------
     # Display flight information.
     # ----------------------------------------------
 
     print(f"Flight: {flight.flight_id}")
+
     print(
         f"Route: {flight.origin} -> "
         f"{flight.destination}"
@@ -140,16 +130,6 @@ for flight in flights:
         f"Days until departure: "
         f"{days_until_departure}"
     )
-
-
-    # TODO:
-    # Enable once cabin_class is added.
-    #
-    # print(
-    #     f"Cabin class: "
-    #     f"{flight.cabin_class}"
-    # )
-
 
     # ----------------------------------------------
     # Display original flight inputs.
@@ -175,7 +155,6 @@ for flight in flights:
         f"Route popularity: "
         f"{flight.route_popularity:.2f}"
     )
-
 
     # ----------------------------------------------
     # Display pricing factors.
@@ -206,16 +185,6 @@ for flight in flights:
         f"{seasonal_factor_value:.2f}"
     )
 
-
-    # TODO:
-    # Enable once cabin_class is added.
-    #
-    # print(
-    #     f"Cabin factor: "
-    #     f"{cabin_factor_value:.2f}"
-    # )
-
-
     # ----------------------------------------------
     # Display pricing results.
     # ----------------------------------------------
@@ -225,9 +194,12 @@ for flight in flights:
         f"${raw_price:.2f}"
     )
 
-    print(
-        f"Final price: "
-        f"${final_price:.2f}"
-    )
+    if final_price is None:
+        print("Final price: Sold Out")
+    else:
+        print(
+            f"Final price: "
+            f"${final_price:.2f}"
+        )
 
     print("-" * 50)

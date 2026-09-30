@@ -1,10 +1,14 @@
 from logging_config import setup_logging
 
+# Set up logging before importing the rest of the project modules.
 setup_logging()
+
+from datetime import datetime
 
 import database
 from flight import Flight
-from sample_data import build_sample_flights
+from sample_data import build_sample_flights, QUOTE_DATE_STR
+from Pricing import calculate_price
 from analysis import (
     load_flights_dataframe,
     add_pricing_factors,
@@ -13,7 +17,14 @@ from analysis import (
 )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+
+    # ==================================================
+    # 1. FLIGHT CLASS DEMONSTRATION
+    # ==================================================
+
+    print("\n--- Flight Class Demonstration ---\n")
+
     f = Flight(
         "PA1001",
         "London",
@@ -25,83 +36,209 @@ if __name__ == '__main__':
         0.91
     )
 
+    # Demonstrate updating seats through the Flight class.
     f.update_seats(-5)
+
     print(f)
-    print("Load factor:", f.load_factor())
+    print("Load factor:", round(f.load_factor(), 2))
+
+
+    # ==================================================
+    # 2. LOAD SAMPLE FLIGHT DATA
+    # ==================================================
 
     flights = build_sample_flights()
 
-    # ---- CREATE / INSERT ----
+    print(
+        f"\nLoaded {len(flights)} flights "
+        f"from the project dataset."
+    )
+
+
+    # ==================================================
+    # 3. SQLITE DATABASE SETUP
+    # ==================================================
+
     conn = database.connect()
-    database.create_table(conn, reset=True)
-    database.insert_many(conn, flights)
 
-    print(f"inserted {len(flights)} flights into potter_airlines.db")
-
-    # ---- SELECT * FROM flights ----
-    cursor = conn.execute("SELECT * FROM flights")
-    all_rows = cursor.fetchall()
-
-    print("total in db:", len(all_rows))
-
-    # ---- SELECT flights by destination ----
-    cursor = conn.execute(
-        "SELECT flight_id FROM flights WHERE destination = ?",
-        ("Hogsmeade",)
+    # Reset the table so every run begins with
+    # the same reproducible dataset.
+    database.create_table(
+        conn,
+        reset=True
     )
 
-    hogsmeade_ids = [row[0] for row in cursor.fetchall()]
-
-    print("flights to Hogsmeade:", hogsmeade_ids)
-
-    # ---- UPDATE seats remaining ----
-    conn.execute(
-        "UPDATE flights SET seats_remaining = ? WHERE flight_id = ?",
-        (5, "PA2001")
-    )
-    conn.commit()
-
-    cursor = conn.execute(
-        "SELECT seats_remaining FROM flights WHERE flight_id = ?",
-        ("PA2001",)
+    database.insert_many(
+        conn,
+        flights
     )
 
-    print("PA2001 seats now:", cursor.fetchone()[0])
-
-    # ---- DELETE flight ----
-    conn.execute(
-        "DELETE FROM flights WHERE flight_id = ?",
-        ("PA2040",)
+    print(
+        f"Inserted {len(flights)} flights "
+        f"into potter_airlines.db"
     )
-    conn.commit()
 
-    cursor = conn.execute("SELECT COUNT(*) FROM flights")
 
-    print("remaining after delete:", cursor.fetchone()[0])
+    # ==================================================
+    # 4. DATABASE SELECT
+    # ==================================================
 
-        # ---- PANDAS / NUMPY ANALYSIS ----
+    all_flights = database.get_all_flights(conn)
 
-    # Load flight data and apply vectorized pricing calculations
+    print(
+        "\nTotal flights in database:",
+        len(all_flights)
+    )
+
+
+    # Find flights travelling to Hogsmeade.
+    hogsmeade_flights = database.get_flights_by_destination(
+        conn,
+        "Hogsmeade"
+    )
+
+    hogsmeade_ids = [
+        flight.flight_id
+        for flight in hogsmeade_flights
+    ]
+
+    print(
+        "Flights to Hogsmeade:",
+        hogsmeade_ids
+    )
+
+
+    # ==================================================
+    # 5. DATABASE UPDATE
+    # ==================================================
+
+    database.update_seats(
+        conn,
+        "PA2001",
+        5
+    )
+
+    updated_flight = database.get_flight(
+        conn,
+        "PA2001"
+    )
+
+    print(
+        "PA2001 seats now:",
+        updated_flight.seats_remaining
+    )
+
+
+    # ==================================================
+    # 6. DATABASE DELETE
+    # ==================================================
+
+    database.delete_flight(
+        conn,
+        "PA2040"
+    )
+
+    remaining_flights = database.get_all_flights(conn)
+
+    print(
+        "Remaining after delete:",
+        len(remaining_flights)
+    )
+
+
+    # ==================================================
+    # 7. DYNAMIC PRICING
+    # ==================================================
+
+    print("\n--- Dynamic Pricing ---\n")
+
+    # Use the project's fixed quote date so the pricing
+    # results remain reproducible across different runs.
+    reference_date = datetime.strptime(
+        QUOTE_DATE_STR,
+        "%Y-%m-%d"
+    ).date()
+
+    # Get the current flights from the database.
+    current_flights = database.get_all_flights(conn)
+
+    # Calculate and display a dynamic price
+    # for each currently available flight.
+    for flight in current_flights:
+
+        final_price = calculate_price(
+            flight,
+            reference_date=reference_date
+        )
+
+        if final_price is None:
+            price_display = "Sold Out"
+        else:
+            price_display = f"${final_price:.2f}"
+
+        print(
+            f"{flight.flight_id}: "
+            f"{flight.origin} -> "
+            f"{flight.destination} | "
+            f"Base fare: ${flight.base_fare:.2f} | "
+            f"Dynamic price: {price_display}"
+        )
+
+
+    # ==================================================
+    # 8. PANDAS / NUMPY ANALYSIS
+    # ==================================================
+
+    print("\n--- Pandas / NumPy Analysis ---\n")
+
+    # Load the current SQLite data into a DataFrame.
     df = load_flights_dataframe(conn)
+
+    # Apply vectorized dynamic pricing calculations.
     df = add_pricing_factors(df)
 
-    # Rank the highest-priced available flights
-    print("\nTop 5 highest-priced flights:")
-    top_flights = get_top_priced_flights(df)
+
+    # --------------------------------------------------
+    # Highest-priced available flights
+    # --------------------------------------------------
+
+    print("Top 5 highest-priced available flights:")
+
+    top_flights = get_top_priced_flights(
+        df
+    )
 
     print(
         top_flights[
-            ["flight_id", "origin", "destination", "final_price"]
+            [
+                "flight_id",
+                "origin",
+                "destination",
+                "final_price"
+            ]
         ]
     )
 
-    # Summarize pricing and load factors by destination
+
+    # --------------------------------------------------
+    # Destination-level summary
+    # --------------------------------------------------
+
     print("\nDestination summary:")
-    destination_summary = summarize_by_destination(df)
+
+    destination_summary = summarize_by_destination(
+        df
+    )
+
     print(destination_summary)
 
 
-    # ---- ERROR HANDLING DEMONSTRATION ----
+    # ==================================================
+    # 9. ERROR HANDLING DEMONSTRATION
+    # ==================================================
+
+    print("\n--- Error Handling Demonstration ---\n")
+
     try:
         invalid_flight = Flight(
             "TEST",
@@ -113,8 +250,22 @@ if __name__ == '__main__':
             120,
             0.5
         )
+
     except ValueError as error:
-        print("\nValidation handled successfully:")
+
+        print(
+            "Validation handled successfully:"
+        )
+
         print(error)
 
+
+    # ==================================================
+    # 10. CLOSE DATABASE CONNECTION
+    # ==================================================
+
     conn.close()
+
+    print(
+        "\nPotter Airlines workflow completed successfully."
+    )

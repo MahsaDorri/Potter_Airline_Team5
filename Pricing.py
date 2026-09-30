@@ -1,13 +1,6 @@
 from flight import Flight
 from datetime import date
 
-# Defines minimum and maximum fare boundaries for each cabin class.
-FARE_BOUNDS = {
-    "Economy": (45, 800),
-    "Business": (200, 1800),
-    "First": (500, 3000)
-}
-
 
 # Calculates a time-based pricing multiplier.
 def time_factor(days_until_departure):
@@ -62,43 +55,13 @@ def seasonal_factor(departure_date):
         return 1.00
 
 
-# Calculates a cabin-class pricing multiplier.
-def cabin_factor(cabin_class):
-    # Higher cabin classes receive a larger multiplier to reflect
-    # the additional service, comfort, and amenities they provide.
-    cabin_factors = {
-        "Economy": 1.00,
-        "Business": 1.60,
-        "First": 2.20
-    }
-
-    if cabin_class not in cabin_factors:
-        raise ValueError(
-            "Cabin class must be Economy, Business, or First."
-        )
-
-    return cabin_factors[cabin_class]
-
-
-# Returns the minimum and maximum fare boundaries for a cabin class.
-def fare_bounds(cabin_class):
-    # Different cabin classes use different price ranges to prevent
-    # dynamically calculated fares from becoming unrealistically low or high.
-    if cabin_class not in FARE_BOUNDS:
-        raise ValueError(
-            "Cabin class must be Economy, Business, or First."
-        )
-
-    return FARE_BOUNDS[cabin_class]
-
-
 # Calculates the final dynamic fare for a single Flight object.
 def calculate_price(flight: Flight, reference_date=None):
 
-        # A sold-out flight has no available fare
+    # A sold-out flight has no available fare.
     if flight.seats_remaining == 0:
         return None
-    
+
     # Use today's date by default to calculate how close the flight is to departure.
     reference_date = reference_date or date.today()
 
@@ -125,12 +88,7 @@ def calculate_price(flight: Flight, reference_date=None):
         flight.departure_date
     )
 
-    # TODO: Enable once cabin_class is added to the Flight class.
-    # cabin_factor_value = cabin_factor(
-    #     flight.cabin_class
-    # )
-
-    # Combine the base fare with all currently active pricing multipliers.
+    # Combine the base fare with all pricing multipliers.
     raw_price = (
         flight.base_fare
         * time_factor_value
@@ -138,17 +96,15 @@ def calculate_price(flight: Flight, reference_date=None):
         * demand_factor_value
         * weekend_factor_value
         * seasonal_factor_value
-        # * cabin_factor_value
     )
 
-    # TODO: Enable cabin-specific fare bounds once cabin_class is added to Flight.
-    # min_fare, max_fare = fare_bounds(flight.cabin_class)
-
-    # Temporary fare bounds until cabin-specific data is finalized.
+    # Keep the final fare within a reasonable price range.
     min_fare = 45
     max_fare = 1500
 
-    # Keep the final fare within a reasonable price range.
-    final_price = max(min_fare, min(raw_price, max_fare))
+    final_price = max(
+        min_fare,
+        min(raw_price, max_fare)
+    )
 
     return round(final_price, 2)
