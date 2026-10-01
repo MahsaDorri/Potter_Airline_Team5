@@ -6,15 +6,15 @@ setup_logging()
 from datetime import datetime
 
 import database
+import matplotlib.pyplot as plt
 from flight import Flight
 from sample_data import build_sample_flights, QUOTE_DATE_STR
 from Pricing import calculate_price
 from analysis import (
     load_flights_dataframe,
-    add_pricing_factors,
+    add_analysis_columns,
     get_top_priced_flights,
     summarize_by_destination,
-    plot_average_price_by_destination,
 )
 
 
@@ -197,8 +197,8 @@ if __name__ == "__main__":
     # Load the current SQLite data into a DataFrame.
     df = load_flights_dataframe(conn)
 
-    # Apply vectorized dynamic pricing calculations.
-    df = add_pricing_factors(df)
+    # Add dynamic prices and vectorized analysis metrics.
+    df = add_analysis_columns(df)
 
 
     # --------------------------------------------------
@@ -242,9 +242,31 @@ if __name__ == "__main__":
 
     print("\nDisplaying average dynamic price by destination graph...")
 
-    plot_average_price_by_destination(
-        destination_summary
+    average_prices = destination_summary["average_price"].sort_values()
+
+    ax = average_prices.plot(
+        kind="barh",
+        figsize=(8, 5),
     )
+
+    for i, value in enumerate(average_prices):
+        ax.text(
+            value,
+            i,
+            f"${value:.2f}",
+            va="center"
+        )
+
+    ax.set_xlim(
+        0,
+        average_prices.max() * 1.15
+    )
+
+    plt.title("Average Dynamic Price by Destination")
+    plt.xlabel("Average Price ($)")
+    plt.ylabel("Destination")
+    plt.tight_layout()
+    plt.show()
 
 
     # ==================================================
