@@ -2,24 +2,26 @@
 
 ## Flight Class, Dataset, Dynamic Pricing, Analysis & Database
 
-This project implements an end-to-end dynamic revenue management workflow for Potter Airlines, including flight data validation, SQLite persistence, dynamic pricing, Pandas/NumPy analysis, visualization, and error handling.
+This project implements an end-to-end dynamic revenue management workflow
+for Potter Airlines -- flight data validation, SQLite persistence, dynamic
+pricing, Pandas/NumPy analysis, visualization, and error handling.
 
-> Every claim in this README was actually run and checked before
-> writing it down -- not just described.
+> Everything below was actually run and checked before writing it down,
+> it's not just a description.
 
 ## Files in this project
 
-| File | What it does | Status |
-|---|---|---|
-| `flight.py` | The `Flight` class -- stores one flight's data and makes sure it's always valid | tested (validation + `update_seats` both checked) |
-| `sample_data.py` | Builds the flight dataset, reads/writes `flights.csv` | tested (40 flights, no duplicate IDs, no past dates) |
-| `flights.csv` | The actual flight data (40 flights), editable in Excel | generated and verified |
-| `Pricing.py` | Dynamic pricing engine that calculates fares using time urgency, occupancy, route popularity, weekend travel, and seasonal effects while enforcing fare limits | tested |
-| `database.py` | SQLite: create the table, insert, select, update, delete | all 4 CRUD operations tested |
-| `analysis.py` | Uses Pandas and NumPy to calculate dynamic prices across multiple flights using vectorized operations, rank flights by price, summarize pricing/load factors by destination, and visualize results | tested |
-| `logging_config.py` | Turns on logging so project activity gets written to `potter_airlines.log` | confirmed DEBUG/INFO/WARNING/ERROR all appear |
-| `main.py` | Runs the complete workflow: flight creation, database CRUD, dynamic pricing, Pandas/NumPy analysis, visualization, and error handling | runs end-to-end with no errors |
-| `test.py` | Runs pricing checks and edge-case validation tests | tested |
+| File | What it does |
+|---|---|
+| `flight.py` | The `Flight` class -- stores one flight's data and makes sure it's always valid |
+| `sample_data.py` | Builds the flight dataset, reads/writes `flights.csv` |
+| `flights.csv` | The actual flight data (40 flights), can be opened/edited in Excel |
+| `Pricing.py` | Dynamic pricing engine -- calculates fares using time urgency, occupancy, route popularity, weekend travel, and seasonal effects, with fare limits |
+| `database.py` | SQLite -- create the table, insert, select, update, delete |
+| `analysis.py` | Uses Pandas and NumPy to calculate dynamic prices across flights, rank them, summarize by destination, and visualize results |
+| `logging_config.py` | Turns on logging so project activity gets written to `potter_airlines.log` |
+| `main.py` | Runs the whole workflow end to end |
+| `test.py` | Pricing checks and edge-case validation tests |
 
 ## How to run it
 
@@ -37,76 +39,37 @@ python main.py
 
 Running `main.py` will:
 
-1. Read `flights.csv` and build the project flight dataset.
-
-2. Create `potter_airlines.db` and insert all flights into the SQLite database.
-
-3. Demonstrate database CRUD operations, including select, update, and delete.
-
+1. Read `flights.csv` and build the flight dataset.
+2. Create `potter_airlines.db` and insert all the flights into it.
+3. Demonstrate database CRUD operations -- select, update, delete.
 4. Apply the dynamic pricing model to the current flights.
-
-5. Load the updated SQLite data into a Pandas DataFrame and apply vectorized pricing calculations using Pandas and NumPy.
-
-6. Rank the highest-priced available flights and produce a destination-level summary.
-
-7. Display a graph of average dynamic price by destination.
-
+5. Load the updated data into a Pandas DataFrame and run vectorized pricing calculations.
+6. Rank the highest-priced available flights and summarize results by destination.
+7. Show a graph of average dynamic price by destination.
 8. Demonstrate error handling and validation.
-
 9. Write project activity to `potter_airlines.log`.
 
 ## The Flight class
 
-`Flight` is the main object-oriented component of the project. It stores a
-flight's ID, route, departure date, base fare, seat information, and route
-popularity, while validating the data when each object is created.
+`Flight` is the main object-oriented piece of the project. It stores a
+flight's id, route, departure date, base fare, seat info, and route
+popularity, and checks the data is valid as soon as the object is created.
 
-### Validation rules
+A few things it checks:
+- `capacity` has to be more than 0 -- tried `capacity=0`, it correctly throws an error
+- `seats_remaining` can't be more than `capacity` -- tried `seats_remaining=999` on a 100-seat flight, errors out
+- `base_fare` can't be negative -- tried -10, errors out
+- `route_popularity` has to be between 0 and 1 -- tried 1.5, errors out
 
-- `capacity` must be greater than 0 -- tested: `Flight(..., capacity=0, ...)` raises `ValueError`
-- `seats_remaining` must be between 0 and `capacity` -- tested: `seats_remaining=999` on a 100-seat flight raises `ValueError`
-- `base_fare` must not be negative -- tested: `base_fare=-10` raises `ValueError`
-- `route_popularity` must be between 0 and 1 -- tested: `route_popularity=1.5` raises `ValueError`
-
-If any of these are invalid, the constructor raises a `ValueError` instead
-of allowing invalid flight data into the system.
-
-### Updating seats safely
-
-`update_seats()` changes `seats_remaining` while enforcing the same capacity
-rules.
-
-Trying to oversell a flight correctly raises `ValueError` instead of allowing
-the seat count to become negative.
+`update_seats()` is the only place that changes `seats_remaining`, and it
+checks the same rules, so a flight can't get oversold by accident.
 
 ## The dataset
 
-### Where the data lives
-
-The flight data is stored in `_RAW_FLIGHTS`, a Python list in
-`sample_data.py`.
-
-The first time the code runs, it writes that list to `flights.csv`. After
-that, `flights.csv` is used as the input dataset, allowing the data to be
-viewed or edited directly.
-
-The synchronization logic only adds missing flight IDs and does not overwrite
-existing CSV rows.
-
-### Why the data is varied
-
-The 40 flights are deliberately varied so the pricing rules and analysis have
-different conditions to work with:
-
-- some depart in 7 days or less, some in 8-21 days, and others much further out
-- some flights have many seats remaining, some are almost full, and one is sold out
-- load factors range from `0.10` to `1.00`
-- route popularity ranges from `0.38` to `0.95`
-- departures are spread across all 12 months
-- higher-demand periods include June-August and November-December
-- lower-demand months include periods such as January and February
-- no departure date is before the project reference date (`2026-09-15`)
-- the earliest departure is 2 days after the reference date
+Data start as a Python list in `sample_data.py`, get saved to
+`flights.csv` on first run (and never overwritten after that), and the 40
+flights are made deliberately varied so pricing and analysis have
+different conditions to work with.
 
 ## Dynamic Pricing
 
