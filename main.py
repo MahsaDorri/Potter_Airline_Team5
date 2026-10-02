@@ -133,9 +133,10 @@ if __name__ == "__main__":
     # ==================================================
     print("\n--- Database Delete ---\n")
     print(
-        "PA2040 seats before delete:",
-        database.get_flight(conn, "PA2040").seats_remaining
+        "Total number of flights before delete:",
+        len(database.get_all_flights(conn))
     )
+    
     database.delete_flight(
         conn,
         "PA2040"
